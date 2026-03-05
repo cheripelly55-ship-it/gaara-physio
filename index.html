@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Squat Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a0a; color: white; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
+    h1 { margin: 16px 0; font-size: 24px; color: #00ff88; }
+
+    #container { position: relative; width: 480px; height: 640px; }
+video { position: absolute; width: 480px; height: 640px; transform: scaleX(-1); }
+canvas { position: absolute; width: 480px; height: 640px; transform: scaleX(-1); }
+
+    #stats { display: flex; gap: 20px; margin: 16px 0; }
+    .stat-box {
+      background: #1a1a1a; border: 2px solid #00ff88;
+      padding: 16px 32px; border-radius: 12px; text-align: center;
+    }
+    .stat-box .number { font-size: 48px; font-weight: bold; color: #00ff88; }
+    .stat-box .label { font-size: 14px; color: #aaa; }
+
+    #correction-box {
+      background: #1a1a1a; border: 2px solid #ff6600;
+      padding: 12px 24px; border-radius: 10px;
+      font-size: 18px; margin-bottom: 16px;
+      min-width: 400px; text-align: center;
+    }
+    #status { color: #aaa; font-size: 13px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <h1>🏋️ Squat Tracker</h1>
+
+  <div id="container">
+    <video id="input_video" autoplay muted playsinline></video>
+    <canvas id="output_canvas"></canvas>
+  </div>
+
+  <div id="stats">
+    <div class="stat-box">
+      <div class="number" id="rep-count">0</div>
+      <div class="label">REPS</div>
+    </div>
+    <div class="stat-box">
+      <div class="number" id="angle-display">--</div>
+      <div class="label">KNEE ANGLE</div>
+    </div>
+    <div class="stat-box">
+      <div class="number" id="stage-display">UP</div>
+      <div class="label">STAGE</div>
+    </div>
+  </div>
+
+  <div id="correction-box">📷 Loading camera...</div>
+  <div id="status">Waiting for pose detection...</div>
+
+  <script>
+    // ─── STATE ───────────────────────────────────────────
+    let repCount = 0;
+    let stage = "up";
+
+    // ─── UTILS ───────────────────────────────────────────
+    function calculateAngle(a, b, c) {
+      const radians = Math.atan2(c.y - b.y, c.x - b.x)
+                    - Math.atan2(a.y - b.y, a.x - b.x);
+      let angle = Math.abs(radians * 180 / Math.PI);
+      if (angle > 180) angle = 360 - angle;
+      return angle;
+    }
+
+    // ─── CORRECTIONS ─────────────────────────────────────
+    function getCorrections(landmarks, kneeAngle) {
+      const corrections = [];
+
+      const leftHip    = landmarks[23];
+      const leftKnee   = landmarks[25];
+      const leftAnkle  = landmarks[27];
+      const leftShoulder = landmarks[11];
+
+      // Knee caving inward
+      if (leftKnee.x < leftAnkle.x - 0.05) {
+        corrections.push("⚠️ Knees caving in — push them outward");
+      }
+
+      // Not going deep enough
+      if (stage === "down" && kneeAngle > 105) {
+        corrections.push("⬇️ Go deeper — aim for parallel");
+      }
+
+      // Leaning too far forward
+      const torsoLean = Math.abs(leftShoulder.x - leftHip.x);
+      if (torsoLean > 0.15) {
+        corrections.push("🔼 Keep chest up — don't lean forward");
+      }
+
+      return corrections.length > 0 ? corrections.join("  |  ") : "✅ Great form! Keep going!";
+    }
+
+    // ─── REP COUNTER ─────────────────────────────────────
+    function countRep(kneeAngle) {
+      if (kneeAngle < 90 && stage === "up") {
+        stage = "down";
+      }
+      if (kneeAngle > 160 && stage === "down") {
+        stage = "up";
+        repCount++;
+        document.getElementById("rep-count").innerText = repCount;
+      }
+      document.getElementById("stage-display").innerText = stage.toUpperCase();
+    }
+
+    // ─── POSE RESULTS CALLBACK ───────────────────────────
+    function onPoseResults(results) {
+      const canvas = document.getElementById("output_canvas");
+      const ctx = canvas.getContext("2d");
+     canvas.width = 480;
+canvas.height = 640;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+      if (results.poseLandmarks) {
+        // Draw skeleton
+        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS,
+          { color: '#00ff88', lineWidth: 3 });
+        drawLandmarks(ctx, results.poseLandmarks,
+          { color: '#ff0066', lineWidth: 2, radius: 5 });
+
+        const lm = results.poseLandmarks;
+        const hip   = lm[23];
+        const knee  = lm[25];
+        const ankle = lm[27];
+
+        // Calculate knee angle
+        const kneeAngle = Math.round(calculateAngle(hip, knee, ankle));
+        document.getElementById("angle-display").innerText = kneeAngle + "°";
+
+        // Draw angle on canvas
+        ctx.font = "bold 20px Arial";
+        ctx.fillStyle = "#ffff00";
+        ctx.fillText(
+          kneeAngle + "°",
+          knee.x * canvas.width + 10,
+          knee.y * canvas.height
+        );
+
+        // Count reps + corrections
+        countRep(kneeAngle);
+        const correction = getCorrections(lm, kneeAngle);
+        document.getElementById("correction-box").innerText = correction;
+        document.getElementById("status").innerText = "✅ Pose detected — start squatting!";
+      } else {
+        document.getElementById("correction-box").innerText = "🔍 No pose detected — step into frame";
+        document.getElementById("status").innerText = "Make sure your full body is visible";
+      }
+    }
+
+    // ─── MEDIAPIPE SETUP ─────────────────────────────────
+    const pose = new Pose({
+      locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+    });
+
+    pose.setOptions({
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    pose.onResults(onPoseResults);
+
+    // ─── CAMERA SETUP ────────────────────────────────────
+    const videoEl = document.getElementById("input_video");
+
+   const camera = new Camera(videoEl, {
+  onFrame: async () => {
+    await pose.send({ image: videoEl });
+  },
+  width: 480,
+  height: 640
+});
+
+    camera.start()
+      .then(() => {
+        document.getElementById("correction-box").innerText = "📷 Camera started — step into frame!";
+      })
+      .catch((err) => {
+        document.getElementById("correction-box").innerText = "❌ Camera error: " + err.message;
+        document.getElementById("status").innerText = "Check that you allowed camera access in your browser";
+      });
+  </script>
+</body>
+</html>
