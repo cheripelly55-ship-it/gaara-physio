@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GaaraPhysio — Motion Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0e14;
+  --panel:#111620;
+  --border:#1e2736;
+  --green:#00e5a0;
+  --green-dim:#00e5a022;
+  --red:#ff4d6d;
+  --red-dim:#ff4d6d22;
+  --yellow:#ffd166;
+  --blue:#4da6ff;
+  --text:#e8edf5;
+  --muted:#5a6a80;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:280px 1fr 280px;grid-template-rows:70px 1fr;height:100vh;gap:0;}
+
+/* HEADER */
+header{
+  grid-column:1/-1;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  z-index:10;
+}
+.logo{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;letter-spacing:-0.02em;}
+.logo span{color:var(--green);}
+.header-status{display:flex;align-items:center;gap:0.6rem;font-size:0.75rem;color:var(--muted);}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background 0.3s;}
+.status-dot.active{background:var(--green);box-shadow:0 0 8px var(--green);}
+.header-right{font-size:0.75rem;color:var(--muted);letter-spacing:0.05em;}
+
+/* LEFT PANEL */
+.left-panel{
+  background:var(--panel);border-right:1px solid var(--border);
+  padding:1.5rem;display:flex;flex-direction:column;gap:1.2rem;overflow-y:auto;
+}
+.panel-title{font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;}
+
+.exercise-btn{
+  background:var(--bg);border:1px solid var(--border);border-radius:12px;
+  padding:1rem 1.2rem;cursor:pointer;transition:all 0.2s;text-align:left;
+  display:flex;align-items:center;gap:0.9rem;
+}
+.exercise-btn:hover{border-color:var(--green);background:var(--green-dim);}
+.exercise-btn.active{border-color:var(--green);background:var(--green-dim);}
+.exercise-btn .ex-icon{font-size:1.6rem;line-height:1;}
+.exercise-btn .ex-name{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:600;color:var(--text);}
+.exercise-btn .ex-desc{font-size:0.7rem;color:var(--muted);margin-top:0.2rem;}
+
+.divider{height:1px;background:var(--border);}
+
+.info-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;}
+.info-box .ib-label{font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;}
+.info-box .ib-value{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;color:var(--green);}
+.info-box .ib-sub{font-size:0.7rem;color:var(--muted);margin-top:0.2rem;}
+
+/* CENTER */
+.center{position:relative;display:flex;align-items:center;justify-content:center;background:#050810;overflow:hidden;}
+#videoEl{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0.85;}
+#canvasEl{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);}
+
+.start-overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(5,8,16,0.92);z-index:5;gap:1.5rem;
+  transition:opacity 0.5s;
+}
+.start-overlay.hidden{opacity:0;pointer-events:none;}
+.start-overlay h2{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;text-align:center;}
+.start-overlay p{color:var(--muted);font-size:0.85rem;text-align:center;max-width:340px;line-height:1.6;}
+.start-btn{
+  background:var(--green);color:#000;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:1rem;padding:0.85rem 2.5rem;border-radius:50px;border:none;cursor:pointer;
+  transition:all 0.2s;letter-spacing:0.03em;
+}
+.start-btn:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(0,229,160,0.4);}
+
+.feedback-bar{
+  position:absolute;top:1.5rem;left:50%;transform:translateX(-50%);
+  padding:0.6rem 1.8rem;border-radius:50px;font-family:'Syne',sans-serif;
+  font-size:0.9rem;font-weight:700;letter-spacing:0.05em;
+  transition:all 0.3s;z-index:4;white-space:nowrap;
+  background:var(--green-dim);border:1.5px solid var(--green);color:var(--green);
+}
+.feedback-bar.bad{background:var(--red-dim);border-color:var(--red);color:var(--red);}
+.feedback-bar.warning{background:rgba(255,209,102,0.15);border-color:var(--yellow);color:var(--yellow);}
+
+.rep-flash{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Syne',sans-serif;font-size:5rem;font-weight:800;color:var(--green);
+  pointer-events:none;opacity:0;transition:opacity 0.1s;text-shadow:0 0 40px var(--green);
+}
+
+/* RIGHT PANEL */
+.right-panel{
+  background:var(--panel);border-left:1px solid var(--border);
+  padding:1.5rem;display:flex;flex-direction:column;gap:1.2rem;overflow-y:auto;
+}
+
+.guide-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;}
+.guide-step{display:flex;gap:0.8rem;align-items:flex-start;padding:0.6rem 0;border-bottom:1px solid var(--border);}
+.guide-step:last-child{border-bottom:none;}
+.step-num{
+  width:22px;height:22px;border-radius:50%;background:var(--green-dim);border:1px solid var(--green);
+  display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--green);
+  flex-shrink:0;margin-top:1px;
+}
+.step-text{font-size:0.78rem;color:var(--muted);line-height:1.5;}
+
+.angle-display{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;}
+.angle-row{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);}
+.angle-row:last-child{border-bottom:none;}
+.angle-label{font-size:0.7rem;color:var(--muted);}
+.angle-value{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:600;color:var(--green);}
+.angle-value.bad{color:var(--red);}
+
+.progress-bar-wrap{margin-top:0.4rem;}
+.pb-label{font-size:0.65rem;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:0.4rem;}
+.pb-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.pb-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.3s;width:0%;}
+.pb-fill.bad{background:var(--red);}
+
+.log-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;flex:1;overflow-y:auto;max-height:200px;}
+.log-entry{font-size:0.7rem;color:var(--muted);padding:0.25rem 0;border-bottom:1px solid var(--border);}
+.log-entry:last-child{border-bottom:none;}
+.log-entry .lt{color:var(--green);margin-right:0.5rem;}
+.log-entry.bad .lt{color:var(--red);}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Gaara<span>Physio</span> <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">/ Motion Trainer</span></div>
+  <div class="header-status">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Camera off</span>
+  </div>
+  <div class="header-right" id="sessionTimer">SESSION: 00:00</div>
+</header>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div>
+    <div class="panel-title">Exercises</div>
+    <div style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.6rem;">
+      <button class="exercise-btn active" onclick="selectExercise('neck')" id="btn-neck">
+        <span class="ex-icon">🙆</span>
+        <div><div class="ex-name">Neck</div><div class="ex-desc">Rotations & tilts</div></div>
+      </button>
+      <button class="exercise-btn" onclick="selectExercise('shoulder')" id="btn-shoulder">
+        <span class="ex-icon">🏋️</span>
+        <div><div class="ex-name">Shoulder & Arm</div><div class="ex-desc">Raises & rotations</div></div>
+      </button>
+      <button class="exercise-btn" onclick="selectExercise('leg')" id="btn-leg">
+        <span class="ex-icon">🦵</span>
+        <div><div class="ex-name">Leg Raises</div><div class="ex-desc">Squats & lifts</div></div>
+      </button>
+      <button class="exercise-btn" onclick="selectExercise('fullbody')" id="btn-fullbody">
+        <span class="ex-icon">🧘</span>
+        <div><div class="ex-name">Full Body</div><div class="ex-desc">Stretch & balance</div></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+    <div class="info-box">
+      <div class="ib-label">Reps</div>
+      <div class="ib-value" id="repCount">0</div>
+      <div class="ib-sub">completed</div>
+    </div>
+    <div class="info-box">
+      <div class="ib-label">Sets</div>
+      <div class="ib-value" id="setCount">0</div>
+      <div class="ib-sub">of 3</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="ib-label">Form Score</div>
+    <div class="ib-value" id="formScore">—</div>
+    <div class="ib-sub">current session</div>
+  </div>
+
+  <button class="start-btn" id="resetBtn" onclick="resetSession()" style="border-radius:12px;padding:0.7rem;font-size:0.85rem;display:none;">↺ Reset Session</button>
+</div>
+
+<!-- CENTER -->
+<div class="center">
+  <video id="videoEl" playsinline muted></video>
+  <canvas id="canvasEl"></canvas>
+
+  <div class="feedback-bar" id="feedbackBar">Waiting for pose...</div>
+  <div class="rep-flash" id="repFlash">+1</div>
+
+  <div class="start-overlay" id="startOverlay">
+    <div style="font-size:3rem;">🏃</div>
+    <h2>Physio Motion<br/>Trainer</h2>
+    <p>Uses your camera and AI pose detection to guide exercises, count reps, and give real-time form feedback.</p>
+    <button class="start-btn" onclick="startCamera()">Start Camera</button>
+    <p style="font-size:0.7rem;color:var(--muted);">Camera stays on your device — no data is sent anywhere.</p>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div>
+    <div class="panel-title">How To</div>
+    <div class="guide-card" id="guideCard"></div>
+  </div>
+
+  <div>
+    <div class="panel-title">Live Angles</div>
+    <div class="angle-display" id="angleDisplay">
+      <div class="angle-row"><span class="angle-label">Left Elbow</span><span class="angle-value" id="ang-lelbow">—°</span></div>
+      <div class="angle-row"><span class="angle-label">Right Elbow</span><span class="angle-value" id="ang-relbow">—°</span></div>
+      <div class="angle-row"><span class="angle-label">Left Knee</span><span class="angle-value" id="ang-lknee">—°</span></div>
+      <div class="angle-row"><span class="angle-label">Right Knee</span><span class="angle-value" id="ang-rknee">—°</span></div>
+      <div class="angle-row"><span class="angle-label">Shoulder Tilt</span><span class="angle-value" id="ang-shoulder">—°</span></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel-title">Rep Progress</div>
+    <div class="progress-bar-wrap">
+      <div class="pb-label"><span id="pb-label-text">Rep progress</span><span id="pb-pct">0%</span></div>
+      <div class="pb-track"><div class="pb-fill" id="pbFill"></div></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel-title">Activity Log</div>
+    <div class="log-box" id="logBox"><div class="log-entry"><span class="lt">--:--</span>Session ready</div></div>
+  </div>
+</div>
+
+</div>
+
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+let currentExercise = 'neck';
+let repCount = 0, setCount = 0, goodReps = 0, totalReps = 0;
+let repState = 'up'; // up/down state machine
+let sessionStart = null;
+let timerInterval = null;
+let lastFeedback = '';
+let repProgress = 0;
+
+// ── EXERCISE CONFIG ─────────────────────────────────────
+const EXERCISES = {
+  neck: {
+    name: 'Neck Tilt',
+    guide: ['Stand or sit upright facing camera','Slowly tilt head to one side','Hold for 1 second at full tilt','Return to center — that is 1 rep','Keep shoulders level throughout'],
+    repsPerSet: 8,
+    detect: detectNeck
+  },
+  shoulder: {
+    name: 'Arm Raise',
+    guide: ['Stand facing camera, arms at sides','Raise both arms out to shoulder height','Hold briefly at the top','Lower arms back down — 1 rep','Keep back straight, no leaning'],
+    repsPerSet: 10,
+    detect: detectShoulder
+  },
+  leg: {
+    name: 'Squat',
+    guide: ['Stand facing camera, feet shoulder width','Bend knees and lower body down','Aim for 90° knee angle at bottom','Drive back up to standing — 1 rep','Keep chest up, knees over toes'],
+    repsPerSet: 10,
+    detect: detectLeg
+  },
+  fullbody: {
+    name: 'Full Stretch',
+    guide: ['Stand tall, arms at sides','Raise both arms overhead fully','Reach up and hold 1 second','Lower back to start — 1 rep','Keep core engaged throughout'],
+    repsPerSet: 8,
+    detect: detectFullBody
+  }
+};
+
+// ── UI HELPERS ──────────────────────────────────────────
+function updateGuide() {
+  const ex = EXERCISES[currentExercise];
+  const card = document.getElementById('guideCard');
+  card.innerHTML = ex.guide.map((s,i) => `
+    <div class="guide-step">
+      <div class="step-num">${i+1}</div>
+      <div class="step-text">${s}</div>
+    </div>`).join('');
+}
+
+function selectExercise(name) {
+  currentExercise = name;
+  document.querySelectorAll('.exercise-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-'+name).classList.add('active');
+  resetSession();
+  updateGuide();
+  addLog('Exercise changed: ' + EXERCISES[name].name);
+}
+
+function resetSession() {
+  repCount = 0; setCount = 0; goodReps = 0; totalReps = 0; repState = 'up'; repProgress = 0;
+  document.getElementById('repCount').textContent = '0';
+  document.getElementById('setCount').textContent = '0';
+  document.getElementById('formScore').textContent = '—';
+  document.getElementById('pbFill').style.width = '0%';
+  document.getElementById('pb-pct').textContent = '0%';
+  document.getElementById('pb-label-text').textContent = EXERCISES[currentExercise].name + ' progress';
+}
+
+function setFeedback(msg, type='good') {
+  if (msg === lastFeedback) return;
+  lastFeedback = msg;
+  const bar = document.getElementById('feedbackBar');
+  bar.textContent = msg;
+  bar.className = 'feedback-bar' + (type === 'bad' ? ' bad' : type === 'warning' ? ' warning' : '');
+}
+
+function flashRep() {
+  const el = document.getElementById('repFlash');
+  el.style.opacity = '1';
+  setTimeout(() => el.style.opacity = '0', 600);
+}
+
+function addLog(msg, bad=false) {
+  const box = document.getElementById('logBox');
+  const now = new Date();
+  const t = String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+  const div = document.createElement('div');
+  div.className = 'log-entry' + (bad ? ' bad' : '');
+  div.innerHTML = `<span class="lt">${t}</span>${msg}`;
+  box.prepend(div);
+  if (box.children.length > 30) box.removeChild(box.lastChild);
+}
+
+function countRep(good=true) {
+  repCount++;
+  totalReps++;
+  if (good) goodReps++;
+  document.getElementById('repCount').textContent = repCount;
+  document.getElementById('formScore').textContent = Math.round((goodReps/totalReps)*100) + '%';
+  flashRep();
+  addLog(`Rep ${repCount} — ${good ? '✓ Good form' : '⚠ Check form'}`, !good);
+
+  const ex = EXERCISES[currentExercise];
+  const pct = Math.min((repCount / ex.repsPerSet) * 100, 100);
+  document.getElementById('pbFill').style.width = pct + '%';
+  document.getElementById('pb-pct').textContent = Math.round(pct) + '%';
+  const fill = document.getElementById('pbFill');
+  fill.className = 'pb-fill' + (!good ? ' bad' : '');
+
+  if (repCount >= ex.repsPerSet) {
+    setCount++;
+    document.getElementById('setCount').textContent = setCount;
+    repCount = 0;
+    document.getElementById('repCount').textContent = '0';
+    document.getElementById('pbFill').style.width = '0%';
+    document.getElementById('pb-pct').textContent = '0%';
+    addLog(`🎉 Set ${setCount} complete!`);
+    setFeedback(`Set ${setCount} done! Rest 30s`, 'warning');
+  }
+}
+
+function updateAngle(id, val, goodMin, goodMax) {
+  const el = document.getElementById(id);
+  if (val === null) { el.textContent = '—°'; el.className='angle-value'; return; }
+  el.textContent = Math.round(val) + '°';
+  el.className = 'angle-value' + (val >= goodMin && val <= goodMax ? '' : ' bad');
+}
+
+// ── MATH ────────────────────────────────────────────────
+function angle3(a, b, c) {
+  const ab = {x: a.x - b.x, y: a.y - b.y};
+  const cb = {x: c.x - b.x, y: c.y - b.y};
+  const dot = ab.x*cb.x + ab.y*cb.y;
+  const mag = Math.sqrt((ab.x**2+ab.y**2)) * Math.sqrt((cb.x**2+cb.y**2));
+  if (mag === 0) return 0;
+  return Math.acos(Math.max(-1, Math.min(1, dot/mag))) * 180 / Math.PI;
+}
+
+function lm(landmarks, idx) {
+  return landmarks[idx];
+}
+
+// ── EXERCISE DETECTORS ──────────────────────────────────
+function detectNeck(lms) {
+  // Use shoulder tilt & nose position relative to shoulders as proxy for head tilt
+  const lShoulder = lm(lms, 11);
+  const rShoulder = lm(lms, 12);
+  const nose = lm(lms, 0);
+  const lEar = lm(lms, 7);
+  const rEar = lm(lms, 8);
+
+  if (!lShoulder || !rShoulder || !nose) return;
+
+  // Shoulder level check
+  const shoulderTilt = Math.abs((lShoulder.y - rShoulder.y)) * 100;
+  updateAngle('ang-shoulder', shoulderTilt * 10, 0, 5);
+
+  // Head tilt: compare ear positions relative to nose
+  const headTilt = ((lEar.y - rEar.y) / (Math.abs(lShoulder.x - rShoulder.x) + 0.001)) * 90;
+  const absTilt = Math.abs(headTilt);
+
+  if (shoulderTilt > 3) {
+    setFeedback('Keep shoulders level!', 'bad');
+    return;
+  }
+
+  // Rep state machine: tilt down = rep
+  if (repState === 'up' && absTilt > 18) {
+    repState = 'down';
+    setFeedback('Good! Hold the tilt...', 'good');
+  } else if (repState === 'down' && absTilt < 8) {
+    repState = 'up';
+    countRep(shoulderTilt < 2);
+    setFeedback('Back to center ✓', 'good');
+  } else if (repState === 'up') {
+    setFeedback('Tilt your head to the side', 'warning');
+  }
+
+  repProgress = Math.min(absTilt / 20, 1);
+}
+
+function detectShoulder(lms) {
+  const lShoulder = lm(lms, 11);
+  const rShoulder = lm(lms, 12);
+  const lElbow = lm(lms, 13);
+  const rElbow = lm(lms, 14);
+  const lWrist = lm(lms, 15);
+  const rWrist = lm(lms, 16);
+  const lHip = lm(lms, 23);
+  const rHip = lm(lms, 24);
+
+  if (!lShoulder||!rShoulder||!lElbow||!rElbow||!lWrist||!rWrist||!lHip||!rHip) return;
+
+  const lElbowAngle = angle3(lShoulder, lElbow, lWrist);
+  const rElbowAngle = angle3(rShoulder, rElbow, rWrist);
+
+  // Arm raise: wrist height relative to shoulder
+  const lRaise = (lShoulder.y - lWrist.y);
+  const rRaise = (rShoulder.y - rWrist.y);
+  const avgRaise = (lRaise + rRaise) / 2;
+
+  updateAngle('ang-lelbow', lElbowAngle, 150, 180);
+  updateAngle('ang-relbow', rElbowAngle, 150, 180);
+
+  const armsStr = Math.min((lElbowAngle + rElbowAngle) / 2, 180);
+  if (armsStr < 140) {
+    setFeedback('Keep arms straighter!', 'bad');
+  }
+
+  if (repState === 'up' && avgRaise > 0.08) {
+    repState = 'down';
+    setFeedback('Arms raised! Hold...', 'good');
+  } else if (repState === 'down' && avgRaise < 0.01) {
+    repState = 'up';
+    countRep(armsStr > 150);
+    setFeedback('Lower complete ✓', 'good');
+  } else if (repState === 'up') {
+    setFeedback('Raise both arms out to sides', 'warning');
+  }
+
+  repProgress = Math.min(Math.max(avgRaise / 0.1, 0), 1);
+}
+
+function detectLeg(lms) {
+  const lHip = lm(lms, 23);
+  const rHip = lm(lms, 24);
+  const lKnee = lm(lms, 25);
+  const rKnee = lm(lms, 26);
+  const lAnkle = lm(lms, 27);
+  const rAnkle = lm(lms, 28);
+
+  if (!lHip||!rHip||!lKnee||!rKnee||!lAnkle||!rAnkle) return;
+
+  const lKneeAngle = angle3(lHip, lKnee, lAnkle);
+  const rKneeAngle = angle3(rHip, rKnee, rAnkle);
+  const avgKnee = (lKneeAngle + rKneeAngle) / 2;
+
+  updateAngle('ang-lknee', lKneeAngle, 85, 110);
+  updateAngle('ang-rknee', rKneeAngle, 85, 110);
+
+  // Squat: knee angle goes below 120 = down
+  if (repState === 'up' && avgKnee < 120) {
+    repState = 'down';
+    setFeedback('In squat position!', 'good');
+  } else if (repState === 'down' && avgKnee > 155) {
+    repState = 'up';
+    const goodForm = avgKnee > 80 && avgKnee < 115;
+    countRep(true);
+    setFeedback('Stood up ✓', 'good');
+  } else if (repState === 'up') {
+    setFeedback('Bend knees to squat down', 'warning');
+  } else if (repState === 'down') {
+    if (avgKnee < 80) setFeedback('Too deep — ease up!', 'bad');
+    else setFeedback('Good depth! Now stand up', 'good');
+  }
+
+  repProgress = Math.min(Math.max((170 - avgKnee) / 60, 0), 1);
+}
+
+function detectFullBody(lms) {
+  const lShoulder = lm(lms, 11);
+  const rShoulder = lm(lms, 12);
+  const lWrist = lm(lms, 15);
+  const rWrist = lm(lms, 16);
+  const lElbow = lm(lms, 13);
+  const rElbow = lm(lms, 14);
+  const lHip = lm(lms, 23);
+  const rHip = lm(lms, 24);
+
+  if (!lShoulder||!rShoulder||!lWrist||!rWrist||!lElbow||!rElbow) return;
+
+  const lElbowAngle = angle3(lShoulder, lElbow, lWrist);
+  const rElbowAngle = angle3(rShoulder, rElbow, rWrist);
+
+  // Arms overhead: wrists above shoulders
+  const lOverhead = lShoulder.y - lWrist.y;
+  const rOverhead = rShoulder.y - rWrist.y;
+  const avgOverhead = (lOverhead + rOverhead) / 2;
+
+  updateAngle('ang-lelbow', lElbowAngle, 160, 180);
+  updateAngle('ang-relbow', rElbowAngle, 160, 180);
+
+  const avgElbow = (lElbowAngle + rElbowAngle) / 2;
+
+  if (repState === 'up' && avgOverhead > 0.12) {
+    repState = 'down';
+    setFeedback('Overhead! Reach higher!', 'good');
+  } else if (repState === 'down' && avgOverhead < 0.0) {
+    repState = 'up';
+    countRep(avgElbow > 155);
+    setFeedback('Full stretch complete ✓', 'good');
+  } else if (repState === 'up') {
+    setFeedback('Raise both arms overhead', 'warning');
+  } else {
+    if (avgElbow < 140) setFeedback('Straighten your arms!', 'bad');
+    else setFeedback('Great! Now lower arms', 'good');
+  }
+
+  repProgress = Math.min(Math.max(avgOverhead / 0.15, 0), 1);
+}
+
+// ── DRAWING ─────────────────────────────────────────────
+function drawSkeleton(lms, canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const connections = window.POSE_CONNECTIONS || [];
+  const green = '#00e5a0', red = '#ff4d6d';
+
+  // Draw connections
+  ctx.lineWidth = 3;
+  for (const [a, b] of connections) {
+    const pa = lms[a], pb = lms[b];
+    if (!pa || !pb || pa.visibility < 0.3 || pb.visibility < 0.3) continue;
+    ctx.beginPath();
+    ctx.strokeStyle = green + '99';
+    ctx.moveTo(pa.x * W, pa.y * H);
+    ctx.lineTo(pb.x * W, pb.y * H);
+    ctx.stroke();
+  }
+
+  // Draw landmarks
+  for (const lm of lms) {
+    if (!lm || lm.visibility < 0.3) continue;
+    ctx.beginPath();
+    ctx.arc(lm.x * W, lm.y * H, 5, 0, Math.PI * 2);
+    ctx.fillStyle = green;
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+}
+
+// ── MEDIAPIPE SETUP ─────────────────────────────────────
+let pose = null;
+let camera = null;
+
+async function startCamera() {
+  document.getElementById('startOverlay').classList.add('hidden');
+  document.getElementById('statusDot').classList.add('active');
+  document.getElementById('statusText').textContent = 'Loading model...';
+  document.getElementById('resetBtn').style.display = 'block';
+
+  const video = document.getElementById('videoEl');
+  const canvas = document.getElementById('canvasEl');
+
+  pose = new Pose({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
+  pose.setOptions({modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
+
+  pose.onResults(results => {
+    canvas.width = video.videoWidth || canvas.offsetWidth;
+    canvas.height = video.videoHeight || canvas.offsetHeight;
+
+    if (results.poseLandmarks) {
+      drawSkeleton(results.poseLandmarks, canvas);
+      EXERCISES[currentExercise].detect(results.poseLandmarks);
+    } else {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setFeedback('No pose detected — step back', 'warning');
+    }
+  });
+
+  camera = new Camera(video, {
+    onFrame: async () => { await pose.send({image: video}); },
+    width: 1280, height: 720
+  });
+
+  try {
+    await camera.start();
+    document.getElementById('statusText').textContent = 'Camera active';
+    sessionStart = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
+    addLog('Session started — ' + EXERCISES[currentExercise].name);
+  } catch(e) {
+    document.getElementById('statusText').textContent = 'Camera error';
+    document.getElementById('startOverlay').classList.remove('hidden');
+    addLog('Camera error: ' + e.message, true);
+  }
+}
+
+function updateTimer() {
+  if (!sessionStart) return;
+  const s = Math.floor((Date.now() - sessionStart) / 1000);
+  const m = Math.floor(s / 60);
+  document.getElementById('sessionTimer').textContent =
+    'SESSION: ' + String(m).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+}
+
+// ── INIT ────────────────────────────────────────────────
+updateGuide();
+</script>
+</body>
+</html>
