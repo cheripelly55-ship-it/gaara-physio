@@ -1,685 +1,654 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Gaara Physio — Restore. Strengthen. Move.</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-  <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GaaraPhysio — Motion Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0e14;
+  --panel:#111620;
+  --border:#1e2736;
+  --green:#00e5a0;
+  --green-dim:#00e5a022;
+  --red:#ff4d6d;
+  --red-dim:#ff4d6d22;
+  --yellow:#ffd166;
+  --blue:#4da6ff;
+  --text:#e8edf5;
+  --muted:#5a6a80;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;}
 
-    :root {
-      --cream: #f5f0e8;
-      --warm-white: #faf8f4;
-      --sand: #e8dcc8;
-      --sage: #7a9e87;
-      --sage-dark: #4e7460;
-      --charcoal: #2a2a2a;
-      --mid: #5a5a5a;
-      --light: #9a9a9a;
-      --accent: #c17f4a;
-    }
+/* LAYOUT */
+.app{display:grid;grid-template-columns:280px 1fr 280px;grid-template-rows:70px 1fr;height:100vh;gap:0;}
 
-    html { scroll-behavior: smooth; }
+/* HEADER */
+header{
+  grid-column:1/-1;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  z-index:10;
+}
+.logo{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;letter-spacing:-0.02em;}
+.logo span{color:var(--green);}
+.header-status{display:flex;align-items:center;gap:0.6rem;font-size:0.75rem;color:var(--muted);}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background 0.3s;}
+.status-dot.active{background:var(--green);box-shadow:0 0 8px var(--green);}
+.header-right{font-size:0.75rem;color:var(--muted);letter-spacing:0.05em;}
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--warm-white);
-      color: var(--charcoal);
-      overflow-x: hidden;
-    }
+/* LEFT PANEL */
+.left-panel{
+  background:var(--panel);border-right:1px solid var(--border);
+  padding:1.5rem;display:flex;flex-direction:column;gap:1.2rem;overflow-y:auto;
+}
+.panel-title{font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;}
 
-    /* NAV */
-    nav {
-      position: fixed; top: 0; width: 100%; z-index: 100;
-      padding: 1.4rem 4rem;
-      display: flex; justify-content: space-between; align-items: center;
-      background: rgba(250,248,244,0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(0,0,0,0.06);
-      transition: all 0.3s ease;
-    }
-    .nav-logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.6rem; font-weight: 600;
-      color: var(--charcoal); text-decoration: none;
-      letter-spacing: 0.02em;
-    }
-    .nav-logo span { color: var(--sage-dark); }
-    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
-    .nav-links a {
-      font-size: 0.85rem; font-weight: 400; letter-spacing: 0.08em;
-      text-transform: uppercase; text-decoration: none;
-      color: var(--mid); transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--sage-dark); }
-    .nav-cta {
-      background: var(--sage-dark); color: #fff !important;
-      padding: 0.55rem 1.4rem; border-radius: 50px;
-      transition: background 0.2s !important;
-    }
-    .nav-cta:hover { background: var(--sage) !important; color: #fff !important; }
+.exercise-btn{
+  background:var(--bg);border:1px solid var(--border);border-radius:12px;
+  padding:1rem 1.2rem;cursor:pointer;transition:all 0.2s;text-align:left;
+  display:flex;align-items:center;gap:0.9rem;
+}
+.exercise-btn:hover{border-color:var(--green);background:var(--green-dim);}
+.exercise-btn.active{border-color:var(--green);background:var(--green-dim);}
+.exercise-btn .ex-icon{font-size:1.6rem;line-height:1;}
+.exercise-btn .ex-name{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:600;color:var(--text);}
+.exercise-btn .ex-desc{font-size:0.7rem;color:var(--muted);margin-top:0.2rem;}
 
-    /* HERO */
-    .hero {
-      min-height: 100vh;
-      display: grid; grid-template-columns: 1fr 1fr;
-      padding-top: 80px;
-      background: var(--warm-white);
-    }
-    .hero-left {
-      display: flex; flex-direction: column; justify-content: center;
-      padding: 6rem 4rem 6rem 6rem;
-      animation: fadeUp 0.9s ease both;
-    }
-    .hero-tag {
-      font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
-      color: var(--sage-dark); font-weight: 500;
-      display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.6rem;
-    }
-    .hero-tag::before {
-      content: ''; width: 2rem; height: 1px; background: var(--sage-dark);
-    }
-    h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(3rem, 5vw, 5rem);
-      font-weight: 300; line-height: 1.1;
-      color: var(--charcoal); margin-bottom: 1.6rem;
-    }
-    h1 em { font-style: italic; color: var(--sage-dark); }
-    .hero-desc {
-      font-size: 1rem; color: var(--mid); line-height: 1.75;
-      max-width: 420px; margin-bottom: 2.8rem;
-    }
-    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .btn-primary {
-      background: var(--sage-dark); color: #fff;
-      padding: 0.85rem 2rem; border-radius: 50px;
-      text-decoration: none; font-size: 0.9rem; font-weight: 500;
-      letter-spacing: 0.03em; transition: all 0.25s;
-      box-shadow: 0 4px 20px rgba(78,116,96,0.25);
-    }
-    .btn-primary:hover { background: var(--sage); transform: translateY(-2px); }
-    .btn-secondary {
-      background: transparent; color: var(--charcoal);
-      padding: 0.85rem 2rem; border-radius: 50px;
-      text-decoration: none; font-size: 0.9rem; font-weight: 400;
-      border: 1.5px solid var(--sand); transition: all 0.25s;
-    }
-    .btn-secondary:hover { border-color: var(--sage); color: var(--sage-dark); }
+.divider{height:1px;background:var(--border);}
 
-    .hero-right {
-      position: relative; overflow: hidden;
-      background: var(--sage);
-      animation: fadeIn 1.1s ease both 0.2s;
-    }
-    .hero-image-bg {
-      position: absolute; inset: 0;
-      background: linear-gradient(135deg, var(--sage-dark) 0%, var(--sage) 60%, #a3c4ae 100%);
-    }
-    .hero-shape {
-      position: absolute; inset: 0;
-      background-image: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.08) 0%, transparent 60%),
-        radial-gradient(circle at 20% 80%, rgba(193,127,74,0.15) 0%, transparent 50%);
-    }
-    .hero-visual {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .hero-icon-wrap {
-      text-align: center; color: rgba(255,255,255,0.9);
-    }
-    .hero-icon-wrap svg { width: 180px; height: 180px; opacity: 0.35; }
-    .hero-stat-block {
-      position: absolute; bottom: 3rem; left: 3rem;
-      background: rgba(255,255,255,0.12);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 16px; padding: 1.4rem 2rem;
-      color: #fff;
-    }
-    .hero-stat-num {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2.8rem; font-weight: 300; line-height: 1;
-    }
-    .hero-stat-label { font-size: 0.8rem; opacity: 0.75; margin-top: 0.3rem; letter-spacing: 0.05em; }
+.info-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;}
+.info-box .ib-label{font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;}
+.info-box .ib-value{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;color:var(--green);}
+.info-box .ib-sub{font-size:0.7rem;color:var(--muted);margin-top:0.2rem;}
 
-    /* MARQUEE STRIP */
-    .marquee-strip {
-      background: var(--charcoal); overflow: hidden;
-      padding: 1rem 0; white-space: nowrap;
-    }
-    .marquee-inner {
-      display: inline-flex; gap: 3rem;
-      animation: marquee 18s linear infinite;
-    }
-    .marquee-item {
-      font-size: 0.75rem; letter-spacing: 0.2em;
-      text-transform: uppercase; color: var(--sand);
-      display: flex; align-items: center; gap: 1.5rem;
-    }
-    .marquee-item::after { content: '◆'; color: var(--accent); font-size: 0.5rem; }
+/* CENTER */
+.center{position:relative;display:flex;align-items:center;justify-content:center;background:#050810;overflow:hidden;}
+#videoEl{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0.85;}
+#canvasEl{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);}
 
-    /* SERVICES */
-    section { padding: 7rem 6rem; }
-    .section-tag {
-      font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
-      color: var(--sage-dark); font-weight: 500;
-      display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem;
-    }
-    .section-tag::before { content: ''; width: 2rem; height: 1px; background: var(--sage-dark); }
-    h2 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.2rem, 3.5vw, 3.2rem);
-      font-weight: 300; line-height: 1.15; margin-bottom: 1rem;
-    }
-    .section-sub { color: var(--mid); max-width: 520px; line-height: 1.7; margin-bottom: 4rem; }
+.start-overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(5,8,16,0.92);z-index:5;gap:1.5rem;
+  transition:opacity 0.5s;
+}
+.start-overlay.hidden{opacity:0;pointer-events:none;}
+.start-overlay h2{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;text-align:center;}
+.start-overlay p{color:var(--muted);font-size:0.85rem;text-align:center;max-width:340px;line-height:1.6;}
+.start-btn{
+  background:var(--green);color:#000;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:1rem;padding:0.85rem 2.5rem;border-radius:50px;border:none;cursor:pointer;
+  transition:all 0.2s;letter-spacing:0.03em;
+}
+.start-btn:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(0,229,160,0.4);}
 
-    .services-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
-    }
-    .service-card {
-      background: var(--cream);
-      border-radius: 20px; padding: 2.5rem;
-      transition: all 0.3s ease; cursor: default;
-      border: 1px solid transparent;
-    }
-    .service-card:hover {
-      background: var(--warm-white);
-      border-color: var(--sage);
-      transform: translateY(-6px);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.07);
-    }
-    .service-icon {
-      width: 52px; height: 52px; border-radius: 14px;
-      background: var(--sage-dark); display: flex; align-items: center; justify-content: center;
-      margin-bottom: 1.5rem;
-    }
-    .service-icon svg { width: 26px; height: 26px; stroke: #fff; fill: none; stroke-width: 1.8; }
-    .service-card h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.4rem; font-weight: 600; margin-bottom: 0.7rem;
-    }
-    .service-card p { font-size: 0.9rem; color: var(--mid); line-height: 1.7; }
+.feedback-bar{
+  position:absolute;top:1.5rem;left:50%;transform:translateX(-50%);
+  padding:0.6rem 1.8rem;border-radius:50px;font-family:'Syne',sans-serif;
+  font-size:0.9rem;font-weight:700;letter-spacing:0.05em;
+  transition:all 0.3s;z-index:4;white-space:nowrap;
+  background:var(--green-dim);border:1.5px solid var(--green);color:var(--green);
+}
+.feedback-bar.bad{background:var(--red-dim);border-color:var(--red);color:var(--red);}
+.feedback-bar.warning{background:rgba(255,209,102,0.15);border-color:var(--yellow);color:var(--yellow);}
 
-    /* WHY US */
-    .why-section {
-      background: var(--charcoal); color: #fff; padding: 7rem 6rem;
-    }
-    .why-section .section-tag { color: var(--sage); }
-    .why-section .section-tag::before { background: var(--sage); }
-    .why-section h2 { color: #fff; }
-    .why-section .section-sub { color: rgba(255,255,255,0.6); }
-    .why-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 2rem; }
-    .why-card {
-      padding: 2rem; border-radius: 16px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      transition: all 0.3s;
-    }
-    .why-card:hover { background: rgba(255,255,255,0.09); transform: translateY(-4px); }
-    .why-num {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 3rem; font-weight: 300; color: var(--sage);
-      line-height: 1; margin-bottom: 0.8rem;
-    }
-    .why-card h4 { font-size: 1rem; font-weight: 500; margin-bottom: 0.5rem; }
-    .why-card p { font-size: 0.85rem; color: rgba(255,255,255,0.5); line-height: 1.65; }
+.rep-flash{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Syne',sans-serif;font-size:5rem;font-weight:800;color:var(--green);
+  pointer-events:none;opacity:0;transition:opacity 0.1s;text-shadow:0 0 40px var(--green);
+}
 
-    /* TEAM */
-    .team-section { background: var(--cream); }
-    .team-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 2rem; }
-    .team-card {
-      background: var(--warm-white); border-radius: 20px; overflow: hidden;
-      transition: all 0.3s;
-    }
-    .team-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
-    .team-img {
-      height: 260px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .team-img-1 { background: linear-gradient(135deg, #b8d4c0, var(--sage)); }
-    .team-img-2 { background: linear-gradient(135deg, var(--sage), var(--sage-dark)); }
-    .team-img-3 { background: linear-gradient(135deg, var(--sage-dark), #3a5a48); }
-    .team-avatar {
-      width: 90px; height: 90px; border-radius: 50%;
-      background: rgba(255,255,255,0.2); border: 3px solid rgba(255,255,255,0.4);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .team-avatar svg { width: 44px; height: 44px; stroke: #fff; fill: none; stroke-width: 1.5; }
-    .team-info { padding: 1.8rem; }
-    .team-info h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.3rem; font-weight: 600; margin-bottom: 0.3rem;
-    }
-    .team-info .role { font-size: 0.8rem; color: var(--sage-dark); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.8rem; }
-    .team-info p { font-size: 0.88rem; color: var(--mid); line-height: 1.65; }
+/* RIGHT PANEL */
+.right-panel{
+  background:var(--panel);border-left:1px solid var(--border);
+  padding:1.5rem;display:flex;flex-direction:column;gap:1.2rem;overflow-y:auto;
+}
 
-    /* TESTIMONIALS */
-    .testimonials-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
-    .testi-card {
-      background: var(--cream); border-radius: 20px; padding: 2.2rem;
-      border: 1px solid transparent; transition: all 0.3s;
-    }
-    .testi-card:hover { border-color: var(--sage); transform: translateY(-4px); }
-    .testi-stars { color: var(--accent); font-size: 1rem; margin-bottom: 1rem; letter-spacing: 0.1em; }
-    .testi-text { font-size: 0.95rem; color: var(--mid); line-height: 1.75; font-style: italic; margin-bottom: 1.5rem; }
-    .testi-author { display: flex; align-items: center; gap: 0.9rem; }
-    .testi-dot { width: 36px; height: 36px; border-radius: 50%; background: var(--sage); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #fff; font-weight: 600; }
-    .testi-name { font-size: 0.9rem; font-weight: 500; }
-    .testi-label { font-size: 0.75rem; color: var(--light); }
+.guide-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;}
+.guide-step{display:flex;gap:0.8rem;align-items:flex-start;padding:0.6rem 0;border-bottom:1px solid var(--border);}
+.guide-step:last-child{border-bottom:none;}
+.step-num{
+  width:22px;height:22px;border-radius:50%;background:var(--green-dim);border:1px solid var(--green);
+  display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--green);
+  flex-shrink:0;margin-top:1px;
+}
+.step-text{font-size:0.78rem;color:var(--muted);line-height:1.5;}
 
-    /* BOOKING */
-    .booking-section {
-      background: linear-gradient(135deg, var(--sage-dark) 0%, var(--sage) 100%);
-      padding: 7rem 6rem; text-align: center; color: #fff;
-    }
-    .booking-section .section-tag { justify-content: center; color: rgba(255,255,255,0.7); }
-    .booking-section .section-tag::before { background: rgba(255,255,255,0.5); }
-    .booking-section h2 { color: #fff; text-align: center; margin-bottom: 0.8rem; }
-    .booking-section p { color: rgba(255,255,255,0.75); max-width: 500px; margin: 0 auto 2.5rem; line-height: 1.7; }
-    .booking-form {
-      display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; max-width: 700px; margin: 0 auto;
-    }
-    .booking-form input, .booking-form select {
-      flex: 1; min-width: 180px; padding: 0.85rem 1.4rem;
-      border-radius: 50px; border: none; outline: none;
-      font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
-      background: rgba(255,255,255,0.15); color: #fff;
-      backdrop-filter: blur(6px);
-      border: 1px solid rgba(255,255,255,0.25);
-    }
-    .booking-form input::placeholder { color: rgba(255,255,255,0.6); }
-    .booking-form select option { color: var(--charcoal); }
-    .booking-form button {
-      padding: 0.85rem 2.2rem; border-radius: 50px; border: none;
-      background: #fff; color: var(--sage-dark); font-weight: 600;
-      font-size: 0.9rem; cursor: pointer; font-family: 'DM Sans', sans-serif;
-      transition: all 0.25s; white-space: nowrap;
-    }
-    .booking-form button:hover { background: var(--cream); transform: translateY(-2px); }
+.angle-display{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;}
+.angle-row{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);}
+.angle-row:last-child{border-bottom:none;}
+.angle-label{font-size:0.7rem;color:var(--muted);}
+.angle-value{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:600;color:var(--green);}
+.angle-value.bad{color:var(--red);}
 
-    /* FOOTER */
-    footer {
-      background: var(--charcoal); color: rgba(255,255,255,0.6);
-      padding: 5rem 6rem 2.5rem;
-    }
-    .footer-top {
-      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 4rem;
-    }
-    .footer-brand .nav-logo { color: #fff; display: block; margin-bottom: 1rem; }
-    .footer-brand p { font-size: 0.88rem; line-height: 1.7; max-width: 280px; }
-    .footer-col h5 {
-      font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
-      color: #fff; font-weight: 500; margin-bottom: 1.3rem;
-    }
-    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
-    .footer-col a { font-size: 0.88rem; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
-    .footer-col a:hover { color: var(--sage); }
-    .footer-bottom {
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding-top: 2rem; display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.82rem;
-    }
+.progress-bar-wrap{margin-top:0.4rem;}
+.pb-label{font-size:0.65rem;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:0.4rem;}
+.pb-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.pb-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.3s;width:0%;}
+.pb-fill.bad{background:var(--red);}
 
-    /* ANIMATIONS */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes marquee {
-      from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
-    }
-
-    /* SCROLL REVEAL */
-    .reveal { opacity: 0; transform: translateY(24px); transition: all 0.7s ease; }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-
-    /* RESPONSIVE */
-    @media (max-width: 1024px) {
-      nav { padding: 1.2rem 2.5rem; }
-      .hero { grid-template-columns: 1fr; min-height: auto; }
-      .hero-left { padding: 5rem 3rem 3rem; }
-      .hero-right { min-height: 360px; }
-      section, .why-section, .team-section, .booking-section, footer { padding: 5rem 3rem; }
-      .services-grid, .why-grid, .team-grid, .testimonials-grid { grid-template-columns: 1fr 1fr; }
-      .footer-top { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 640px) {
-      .nav-links { display: none; }
-      .services-grid, .why-grid, .team-grid, .testimonials-grid { grid-template-columns: 1fr; }
-      .footer-top { grid-template-columns: 1fr; }
-      .footer-bottom { flex-direction: column; gap: 0.5rem; text-align: center; }
-    }
-  </style>
+.log-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;flex:1;overflow-y:auto;max-height:200px;}
+.log-entry{font-size:0.7rem;color:var(--muted);padding:0.25rem 0;border-bottom:1px solid var(--border);}
+.log-entry:last-child{border-bottom:none;}
+.log-entry .lt{color:var(--green);margin-right:0.5rem;}
+.log-entry.bad .lt{color:var(--red);}
+</style>
 </head>
 <body>
+<div class="app">
 
-<!-- NAV -->
-<nav>
-  <a href="#" class="nav-logo">Gaara<span>Physio</span></a>
-  <ul class="nav-links">
-    <li><a href="#services">Services</a></li>
-    <li><a href="#team">Team</a></li>
-    <li><a href="#about">About</a></li>
-    <li><a href="#testimonials">Reviews</a></li>
-    <li><a href="#book" class="nav-cta">Book Now</a></li>
-  </ul>
-</nav>
+<!-- HEADER -->
+<header>
+  <div class="logo">Gaara<span>Physio</span> <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">/ Motion Trainer</span></div>
+  <div class="header-status">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Camera off</span>
+  </div>
+  <div class="header-right" id="sessionTimer">SESSION: 00:00</div>
+</header>
 
-<!-- HERO -->
-<section class="hero" style="padding:0;">
-  <div class="hero-left">
-    <div class="hero-tag">Expert Physiotherapy Care</div>
-    <h1>Restore Your Body's <em>Natural Motion</em></h1>
-    <p class="hero-desc">Personalised physiotherapy and rehabilitation programs designed to get you moving pain-free and performing at your best.</p>
-    <div class="hero-btns">
-      <a href="#book" class="btn-primary">Book a Session</a>
-      <a href="#services" class="btn-secondary">Our Services</a>
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div>
+    <div class="panel-title">Exercises</div>
+    <div style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.6rem;">
+      <button class="exercise-btn active" onclick="selectExercise('neck')" id="btn-neck">
+        <span class="ex-icon">🙆</span>
+        <div><div class="ex-name">Neck</div><div class="ex-desc">Rotations & tilts</div></div>
+      </button>
+      <button class="exercise-btn" onclick="selectExercise('shoulder')" id="btn-shoulder">
+        <span class="ex-icon">🏋️</span>
+        <div><div class="ex-name">Shoulder & Arm</div><div class="ex-desc">Raises & rotations</div></div>
+      </button>
+      <button class="exercise-btn" onclick="selectExercise('leg')" id="btn-leg">
+        <span class="ex-icon">🦵</span>
+        <div><div class="ex-name">Leg Raises</div><div class="ex-desc">Squats & lifts</div></div>
+      </button>
+      <button class="exercise-btn" onclick="selectExercise('fullbody')" id="btn-fullbody">
+        <span class="ex-icon">🧘</span>
+        <div><div class="ex-name">Full Body</div><div class="ex-desc">Stretch & balance</div></div>
+      </button>
     </div>
   </div>
-  <div class="hero-right">
-    <div class="hero-image-bg"></div>
-    <div class="hero-shape"></div>
-    <div class="hero-visual">
-      <div class="hero-icon-wrap">
-        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="100" cy="60" r="28" stroke="white" stroke-width="2.5"/>
-          <path d="M68 100 Q80 88 100 88 Q120 88 132 100 L140 145 Q120 155 100 155 Q80 155 60 145 Z" stroke="white" stroke-width="2.5" fill="none"/>
-          <path d="M68 102 L50 130 M132 102 L150 130" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M88 155 L83 185 M112 155 L117 185" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="50" cy="134" r="8" stroke="white" stroke-width="2" fill="none"/>
-          <circle cx="150" cy="134" r="8" stroke="white" stroke-width="2" fill="none"/>
-        </svg>
-      </div>
+
+  <div class="divider"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+    <div class="info-box">
+      <div class="ib-label">Reps</div>
+      <div class="ib-value" id="repCount">0</div>
+      <div class="ib-sub">completed</div>
     </div>
-    <div class="hero-stat-block">
-      <div class="hero-stat-num">1,200+</div>
-      <div class="hero-stat-label">Patients recovered</div>
+    <div class="info-box">
+      <div class="ib-label">Sets</div>
+      <div class="ib-value" id="setCount">0</div>
+      <div class="ib-sub">of 3</div>
     </div>
   </div>
-</section>
 
-<!-- MARQUEE -->
-<div class="marquee-strip">
-  <div class="marquee-inner">
-    <span class="marquee-item">Sports Rehabilitation</span>
-    <span class="marquee-item">Post-Surgery Recovery</span>
-    <span class="marquee-item">Manual Therapy</span>
-    <span class="marquee-item">Pain Management</span>
-    <span class="marquee-item">Postural Correction</span>
-    <span class="marquee-item">Dry Needling</span>
-    <span class="marquee-item">Hydrotherapy</span>
-    <span class="marquee-item">Geriatric Physio</span>
-    <span class="marquee-item">Sports Rehabilitation</span>
-    <span class="marquee-item">Post-Surgery Recovery</span>
-    <span class="marquee-item">Manual Therapy</span>
-    <span class="marquee-item">Pain Management</span>
-    <span class="marquee-item">Postural Correction</span>
-    <span class="marquee-item">Dry Needling</span>
-    <span class="marquee-item">Hydrotherapy</span>
-    <span class="marquee-item">Geriatric Physio</span>
+  <div class="info-box">
+    <div class="ib-label">Form Score</div>
+    <div class="ib-value" id="formScore">—</div>
+    <div class="ib-sub">current session</div>
+  </div>
+
+  <button class="start-btn" id="resetBtn" onclick="resetSession()" style="border-radius:12px;padding:0.7rem;font-size:0.85rem;display:none;">↺ Reset Session</button>
+</div>
+
+<!-- CENTER -->
+<div class="center">
+  <video id="videoEl" playsinline muted></video>
+  <canvas id="canvasEl"></canvas>
+
+  <div class="feedback-bar" id="feedbackBar">Waiting for pose...</div>
+  <div class="rep-flash" id="repFlash">+1</div>
+
+  <div class="start-overlay" id="startOverlay">
+    <div style="font-size:3rem;">🏃</div>
+    <h2>Physio Motion<br/>Trainer</h2>
+    <p>Uses your camera and AI pose detection to guide exercises, count reps, and give real-time form feedback.</p>
+    <button class="start-btn" onclick="startCamera()">Start Camera</button>
+    <p style="font-size:0.7rem;color:var(--muted);">Camera stays on your device — no data is sent anywhere.</p>
   </div>
 </div>
 
-<!-- SERVICES -->
-<section id="services">
-  <div class="section-tag">What We Offer</div>
-  <h2>Specialised Treatment <br>Programs</h2>
-  <p class="section-sub">From acute injuries to chronic pain, our evidence-based therapies are tailored to your unique needs and recovery goals.</p>
-  <div class="services-grid">
-    <div class="service-card reveal">
-      <div class="service-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 2L8 6H4v4l-2 2 2 2v4h4l4 4 4-4h4v-4l2-2-2-2V6h-4L12 2z"/></svg>
-      </div>
-      <h3>Sports Rehabilitation</h3>
-      <p>Targeted recovery programs for athletes at all levels. Return to peak performance safely and efficiently with our sport-specific protocols.</p>
-    </div>
-    <div class="service-card reveal">
-      <div class="service-icon">
-        <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
-      </div>
-      <h3>Post-Surgery Recovery</h3>
-      <p>Structured rehabilitation following joint replacements, ligament repairs, and other surgical procedures with measurable milestones.</p>
-    </div>
-    <div class="service-card reveal">
-      <div class="service-icon">
-        <svg viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-      </div>
-      <h3>Manual Therapy</h3>
-      <p>Hands-on joint mobilisation and soft tissue techniques to reduce pain, restore mobility, and improve overall musculoskeletal function.</p>
-    </div>
-    <div class="service-card reveal">
-      <div class="service-icon">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-      </div>
-      <h3>Chronic Pain Management</h3>
-      <p>Evidence-based approaches combining movement therapy, education, and lifestyle strategies for long-term relief from persistent pain conditions.</p>
-    </div>
-    <div class="service-card reveal">
-      <div class="service-icon">
-        <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M9 2h6a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1V3a1 1 0 011-1z"/></svg>
-      </div>
-      <h3>Postural Assessment</h3>
-      <p>Comprehensive biomechanical analysis and correction programs to address postural imbalances, reducing strain and preventing future injury.</p>
-    </div>
-    <div class="service-card reveal">
-      <div class="service-icon">
-        <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-      </div>
-      <h3>Dry Needling</h3>
-      <p>Targeted trigger point therapy using fine needles to release muscular tension, alleviate pain, and restore optimal muscle function rapidly.</p>
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div>
+    <div class="panel-title">How To</div>
+    <div class="guide-card" id="guideCard"></div>
+  </div>
+
+  <div>
+    <div class="panel-title">Live Angles</div>
+    <div class="angle-display" id="angleDisplay">
+      <div class="angle-row"><span class="angle-label">Left Elbow</span><span class="angle-value" id="ang-lelbow">—°</span></div>
+      <div class="angle-row"><span class="angle-label">Right Elbow</span><span class="angle-value" id="ang-relbow">—°</span></div>
+      <div class="angle-row"><span class="angle-label">Left Knee</span><span class="angle-value" id="ang-lknee">—°</span></div>
+      <div class="angle-row"><span class="angle-label">Right Knee</span><span class="angle-value" id="ang-rknee">—°</span></div>
+      <div class="angle-row"><span class="angle-label">Shoulder Tilt</span><span class="angle-value" id="ang-shoulder">—°</span></div>
     </div>
   </div>
-</section>
 
-<!-- WHY US -->
-<div class="why-section" id="about">
-  <div class="section-tag">Why Choose Us</div>
-  <h2>Committed to Your<br>Recovery</h2>
-  <p class="section-sub">We combine clinical expertise with genuine care to deliver results that last.</p>
-  <div class="why-grid">
-    <div class="why-card reveal">
-      <div class="why-num">15+</div>
-      <h4>Years Experience</h4>
-      <p>Over a decade of clinical expertise in physiotherapy and musculoskeletal rehabilitation.</p>
+  <div>
+    <div class="panel-title">Rep Progress</div>
+    <div class="progress-bar-wrap">
+      <div class="pb-label"><span id="pb-label-text">Rep progress</span><span id="pb-pct">0%</span></div>
+      <div class="pb-track"><div class="pb-fill" id="pbFill"></div></div>
     </div>
-    <div class="why-card reveal">
-      <div class="why-num">98%</div>
-      <h4>Patient Satisfaction</h4>
-      <p>Our patients consistently rate their treatment experience and outcomes as excellent.</p>
-    </div>
-    <div class="why-card reveal">
-      <div class="why-num">12</div>
-      <h4>Expert Therapists</h4>
-      <p>A dedicated team of qualified, continuously trained physiotherapy specialists.</p>
-    </div>
-    <div class="why-card reveal">
-      <div class="why-num">24h</div>
-      <h4>Rapid Appointments</h4>
-      <p>Same or next-day appointments available so you never wait when you need help.</p>
-    </div>
+  </div>
+
+  <div>
+    <div class="panel-title">Activity Log</div>
+    <div class="log-box" id="logBox"><div class="log-entry"><span class="lt">--:--</span>Session ready</div></div>
   </div>
 </div>
 
-<!-- TEAM -->
-<section class="team-section" id="team">
-  <div class="section-tag">Our Specialists</div>
-  <h2>Meet the Team</h2>
-  <p class="section-sub">Experienced physiotherapists dedicated to your wellbeing and recovery.</p>
-  <div class="team-grid">
-    <div class="team-card reveal">
-      <div class="team-img team-img-1">
-        <div class="team-avatar">
-          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
-      </div>
-      <div class="team-info">
-        <h3>Dr. Sarah Mitchell</h3>
-        <div class="role">Lead Physiotherapist</div>
-        <p>Specialising in sports injuries and post-surgical rehabilitation with 12 years of experience in elite athlete care.</p>
-      </div>
-    </div>
-    <div class="team-card reveal">
-      <div class="team-img team-img-2">
-        <div class="team-avatar">
-          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
-      </div>
-      <div class="team-info">
-        <h3>Dr. James Okafor</h3>
-        <div class="role">Manual Therapist</div>
-        <p>Expert in spinal manipulation and joint mobilisation with a focus on chronic pain management and neurological conditions.</p>
-      </div>
-    </div>
-    <div class="team-card reveal">
-      <div class="team-img team-img-3">
-        <div class="team-avatar">
-          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
-      </div>
-      <div class="team-info">
-        <h3>Dr. Priya Sharma</h3>
-        <div class="role">Paediatric Physio</div>
-        <p>Dedicated to children's physiotherapy and developmental movement, with specialist training in paediatric neurological rehab.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- TESTIMONIALS -->
-<section id="testimonials">
-  <div class="section-tag">Patient Stories</div>
-  <h2>What Our Patients Say</h2>
-  <p class="section-sub">Real experiences from people who reclaimed their movement and quality of life.</p>
-  <div class="testimonials-grid">
-    <div class="testi-card reveal">
-      <div class="testi-stars">★★★★★</div>
-      <p class="testi-text">"After my ACL surgery I was told I might never run again. The team at Gaara Physio had me back on the field in six months. I am truly grateful."</p>
-      <div class="testi-author">
-        <div class="testi-dot">MK</div>
-        <div><div class="testi-name">Mohammed K.</div><div class="testi-label">ACL Reconstruction Patient</div></div>
-      </div>
-    </div>
-    <div class="testi-card reveal">
-      <div class="testi-stars">★★★★★</div>
-      <p class="testi-text">"Years of lower back pain resolved in just eight sessions. The personalised approach and genuine care made all the difference. Highly recommend."</p>
-      <div class="testi-author">
-        <div class="testi-dot">RL</div>
-        <div><div class="testi-name">Rachel L.</div><div class="testi-label">Chronic Back Pain Patient</div></div>
-      </div>
-    </div>
-    <div class="testi-card reveal">
-      <div class="testi-stars">★★★★★</div>
-      <p class="testi-text">"Professional, knowledgeable, and genuinely caring. My shoulder mobility is better now than before my injury. The whole experience exceeded my expectations."</p>
-      <div class="testi-author">
-        <div class="testi-dot">TN</div>
-        <div><div class="testi-name">Thomas N.</div><div class="testi-label">Rotator Cuff Patient</div></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- BOOKING -->
-<div class="booking-section" id="book">
-  <div class="section-tag">Get Started</div>
-  <h2>Book Your Appointment</h2>
-  <p>Take the first step towards recovery. Choose a convenient time and our team will confirm your session within the hour.</p>
-  <div class="booking-form">
-    <input type="text" placeholder="Your Full Name"/>
-    <input type="tel" placeholder="Phone Number"/>
-    <select>
-      <option value="" disabled selected>Select Service</option>
-      <option>Sports Rehabilitation</option>
-      <option>Post-Surgery Recovery</option>
-      <option>Manual Therapy</option>
-      <option>Chronic Pain Management</option>
-      <option>Postural Assessment</option>
-      <option>Dry Needling</option>
-    </select>
-    <button type="button">Book Now →</button>
-  </div>
 </div>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-top">
-    <div class="footer-brand">
-      <a href="#" class="nav-logo">Gaara<span style="color:var(--sage)">Physio</span></a>
-      <p>Restoring movement, reducing pain, and improving quality of life through expert physiotherapy care.</p>
-    </div>
-    <div class="footer-col">
-      <h5>Services</h5>
-      <ul>
-        <li><a href="#services">Sports Rehab</a></li>
-        <li><a href="#services">Manual Therapy</a></li>
-        <li><a href="#services">Pain Management</a></li>
-        <li><a href="#services">Dry Needling</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h5>Clinic</h5>
-      <ul>
-        <li><a href="#team">Our Team</a></li>
-        <li><a href="#about">About Us</a></li>
-        <li><a href="#testimonials">Reviews</a></li>
-        <li><a href="#book">Contact</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h5>Contact</h5>
-      <ul>
-        <li><a href="tel:+61000000000">+61 (0) 000 000 000</a></li>
-        <li><a href="mailto:hello@gaaraphysio.com">hello@gaaraphysio.com</a></li>
-        <li><a href="#">123 Wellness Ave</a></li>
-        <li><a href="#">Mon–Sat 8am–6pm</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <span>© 2025 GaaraPhysio. All rights reserved.</span>
-    <span>Built with care for better health</span>
-  </div>
-</footer>
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 
 <script>
-  // Scroll reveal
-  const reveals = document.querySelectorAll('.reveal');
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach((entry, i) => {
-      if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('visible'), i * 80);
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1 });
-  reveals.forEach(el => observer.observe(el));
+// ── STATE ──────────────────────────────────────────────
+let currentExercise = 'neck';
+let repCount = 0, setCount = 0, goodReps = 0, totalReps = 0;
+let repState = 'up'; // up/down state machine
+let sessionStart = null;
+let timerInterval = null;
+let lastFeedback = '';
+let repProgress = 0;
 
-  // Sticky nav shadow
-  window.addEventListener('scroll', () => {
-    document.querySelector('nav').style.boxShadow =
-      window.scrollY > 20 ? '0 4px 30px rgba(0,0,0,0.08)' : 'none';
-  });
+// ── EXERCISE CONFIG ─────────────────────────────────────
+const EXERCISES = {
+  neck: {
+    name: 'Neck Tilt',
+    guide: ['Stand or sit upright facing camera','Slowly tilt head to one side','Hold for 1 second at full tilt','Return to center — that is 1 rep','Keep shoulders level throughout'],
+    repsPerSet: 8,
+    detect: detectNeck
+  },
+  shoulder: {
+    name: 'Arm Raise',
+    guide: ['Stand facing camera, arms at sides','Raise both arms out to shoulder height','Hold briefly at the top','Lower arms back down — 1 rep','Keep back straight, no leaning'],
+    repsPerSet: 10,
+    detect: detectShoulder
+  },
+  leg: {
+    name: 'Squat',
+    guide: ['Stand facing camera, feet shoulder width','Bend knees and lower body down','Aim for 90° knee angle at bottom','Drive back up to standing — 1 rep','Keep chest up, knees over toes'],
+    repsPerSet: 10,
+    detect: detectLeg
+  },
+  fullbody: {
+    name: 'Full Stretch',
+    guide: ['Stand tall, arms at sides','Raise both arms overhead fully','Reach up and hold 1 second','Lower back to start — 1 rep','Keep core engaged throughout'],
+    repsPerSet: 8,
+    detect: detectFullBody
+  }
+};
 
-  // Booking button feedback
-  document.querySelector('.booking-form button').addEventListener('click', function() {
-    const inputs = document.querySelectorAll('.booking-form input, .booking-form select');
-    let valid = true;
-    inputs.forEach(i => { if (!i.value) valid = false; });
-    if (valid) {
-      this.textContent = '✓ Request Sent!';
-      this.style.background = '#e8f5ec';
-      setTimeout(() => { this.textContent = 'Book Now →'; this.style.background = '#fff'; }, 3000);
+// ── UI HELPERS ──────────────────────────────────────────
+function updateGuide() {
+  const ex = EXERCISES[currentExercise];
+  const card = document.getElementById('guideCard');
+  card.innerHTML = ex.guide.map((s,i) => `
+    <div class="guide-step">
+      <div class="step-num">${i+1}</div>
+      <div class="step-text">${s}</div>
+    </div>`).join('');
+}
+
+function selectExercise(name) {
+  currentExercise = name;
+  document.querySelectorAll('.exercise-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-'+name).classList.add('active');
+  resetSession();
+  updateGuide();
+  addLog('Exercise changed: ' + EXERCISES[name].name);
+}
+
+function resetSession() {
+  repCount = 0; setCount = 0; goodReps = 0; totalReps = 0; repState = 'up'; repProgress = 0;
+  document.getElementById('repCount').textContent = '0';
+  document.getElementById('setCount').textContent = '0';
+  document.getElementById('formScore').textContent = '—';
+  document.getElementById('pbFill').style.width = '0%';
+  document.getElementById('pb-pct').textContent = '0%';
+  document.getElementById('pb-label-text').textContent = EXERCISES[currentExercise].name + ' progress';
+}
+
+function setFeedback(msg, type='good') {
+  if (msg === lastFeedback) return;
+  lastFeedback = msg;
+  const bar = document.getElementById('feedbackBar');
+  bar.textContent = msg;
+  bar.className = 'feedback-bar' + (type === 'bad' ? ' bad' : type === 'warning' ? ' warning' : '');
+}
+
+function flashRep() {
+  const el = document.getElementById('repFlash');
+  el.style.opacity = '1';
+  setTimeout(() => el.style.opacity = '0', 600);
+}
+
+function addLog(msg, bad=false) {
+  const box = document.getElementById('logBox');
+  const now = new Date();
+  const t = String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+  const div = document.createElement('div');
+  div.className = 'log-entry' + (bad ? ' bad' : '');
+  div.innerHTML = `<span class="lt">${t}</span>${msg}`;
+  box.prepend(div);
+  if (box.children.length > 30) box.removeChild(box.lastChild);
+}
+
+function countRep(good=true) {
+  repCount++;
+  totalReps++;
+  if (good) goodReps++;
+  document.getElementById('repCount').textContent = repCount;
+  document.getElementById('formScore').textContent = Math.round((goodReps/totalReps)*100) + '%';
+  flashRep();
+  addLog(`Rep ${repCount} — ${good ? '✓ Good form' : '⚠ Check form'}`, !good);
+
+  const ex = EXERCISES[currentExercise];
+  const pct = Math.min((repCount / ex.repsPerSet) * 100, 100);
+  document.getElementById('pbFill').style.width = pct + '%';
+  document.getElementById('pb-pct').textContent = Math.round(pct) + '%';
+  const fill = document.getElementById('pbFill');
+  fill.className = 'pb-fill' + (!good ? ' bad' : '');
+
+  if (repCount >= ex.repsPerSet) {
+    setCount++;
+    document.getElementById('setCount').textContent = setCount;
+    repCount = 0;
+    document.getElementById('repCount').textContent = '0';
+    document.getElementById('pbFill').style.width = '0%';
+    document.getElementById('pb-pct').textContent = '0%';
+    addLog(`🎉 Set ${setCount} complete!`);
+    setFeedback(`Set ${setCount} done! Rest 30s`, 'warning');
+  }
+}
+
+function updateAngle(id, val, goodMin, goodMax) {
+  const el = document.getElementById(id);
+  if (val === null) { el.textContent = '—°'; el.className='angle-value'; return; }
+  el.textContent = Math.round(val) + '°';
+  el.className = 'angle-value' + (val >= goodMin && val <= goodMax ? '' : ' bad');
+}
+
+// ── MATH ────────────────────────────────────────────────
+function angle3(a, b, c) {
+  const ab = {x: a.x - b.x, y: a.y - b.y};
+  const cb = {x: c.x - b.x, y: c.y - b.y};
+  const dot = ab.x*cb.x + ab.y*cb.y;
+  const mag = Math.sqrt((ab.x**2+ab.y**2)) * Math.sqrt((cb.x**2+cb.y**2));
+  if (mag === 0) return 0;
+  return Math.acos(Math.max(-1, Math.min(1, dot/mag))) * 180 / Math.PI;
+}
+
+function lm(landmarks, idx) {
+  return landmarks[idx];
+}
+
+// ── EXERCISE DETECTORS ──────────────────────────────────
+function detectNeck(lms) {
+  // Use shoulder tilt & nose position relative to shoulders as proxy for head tilt
+  const lShoulder = lm(lms, 11);
+  const rShoulder = lm(lms, 12);
+  const nose = lm(lms, 0);
+  const lEar = lm(lms, 7);
+  const rEar = lm(lms, 8);
+
+  if (!lShoulder || !rShoulder || !nose) return;
+
+  // Shoulder level check
+  const shoulderTilt = Math.abs((lShoulder.y - rShoulder.y)) * 100;
+  updateAngle('ang-shoulder', shoulderTilt * 10, 0, 5);
+
+  // Head tilt: compare ear positions relative to nose
+  const headTilt = ((lEar.y - rEar.y) / (Math.abs(lShoulder.x - rShoulder.x) + 0.001)) * 90;
+  const absTilt = Math.abs(headTilt);
+
+  if (shoulderTilt > 3) {
+    setFeedback('Keep shoulders level!', 'bad');
+    return;
+  }
+
+  // Rep state machine: tilt down = rep
+  if (repState === 'up' && absTilt > 18) {
+    repState = 'down';
+    setFeedback('Good! Hold the tilt...', 'good');
+  } else if (repState === 'down' && absTilt < 8) {
+    repState = 'up';
+    countRep(shoulderTilt < 2);
+    setFeedback('Back to center ✓', 'good');
+  } else if (repState === 'up') {
+    setFeedback('Tilt your head to the side', 'warning');
+  }
+
+  repProgress = Math.min(absTilt / 20, 1);
+}
+
+function detectShoulder(lms) {
+  const lShoulder = lm(lms, 11);
+  const rShoulder = lm(lms, 12);
+  const lElbow = lm(lms, 13);
+  const rElbow = lm(lms, 14);
+  const lWrist = lm(lms, 15);
+  const rWrist = lm(lms, 16);
+  const lHip = lm(lms, 23);
+  const rHip = lm(lms, 24);
+
+  if (!lShoulder||!rShoulder||!lElbow||!rElbow||!lWrist||!rWrist||!lHip||!rHip) return;
+
+  const lElbowAngle = angle3(lShoulder, lElbow, lWrist);
+  const rElbowAngle = angle3(rShoulder, rElbow, rWrist);
+
+  // Arm raise: wrist height relative to shoulder
+  const lRaise = (lShoulder.y - lWrist.y);
+  const rRaise = (rShoulder.y - rWrist.y);
+  const avgRaise = (lRaise + rRaise) / 2;
+
+  updateAngle('ang-lelbow', lElbowAngle, 150, 180);
+  updateAngle('ang-relbow', rElbowAngle, 150, 180);
+
+  const armsStr = Math.min((lElbowAngle + rElbowAngle) / 2, 180);
+  if (armsStr < 140) {
+    setFeedback('Keep arms straighter!', 'bad');
+  }
+
+  if (repState === 'up' && avgRaise > 0.08) {
+    repState = 'down';
+    setFeedback('Arms raised! Hold...', 'good');
+  } else if (repState === 'down' && avgRaise < 0.01) {
+    repState = 'up';
+    countRep(armsStr > 150);
+    setFeedback('Lower complete ✓', 'good');
+  } else if (repState === 'up') {
+    setFeedback('Raise both arms out to sides', 'warning');
+  }
+
+  repProgress = Math.min(Math.max(avgRaise / 0.1, 0), 1);
+}
+
+function detectLeg(lms) {
+  const lHip = lm(lms, 23);
+  const rHip = lm(lms, 24);
+  const lKnee = lm(lms, 25);
+  const rKnee = lm(lms, 26);
+  const lAnkle = lm(lms, 27);
+  const rAnkle = lm(lms, 28);
+
+  if (!lHip||!rHip||!lKnee||!rKnee||!lAnkle||!rAnkle) return;
+
+  const lKneeAngle = angle3(lHip, lKnee, lAnkle);
+  const rKneeAngle = angle3(rHip, rKnee, rAnkle);
+  const avgKnee = (lKneeAngle + rKneeAngle) / 2;
+
+  updateAngle('ang-lknee', lKneeAngle, 85, 110);
+  updateAngle('ang-rknee', rKneeAngle, 85, 110);
+
+  // Squat: knee angle goes below 120 = down
+  if (repState === 'up' && avgKnee < 120) {
+    repState = 'down';
+    setFeedback('In squat position!', 'good');
+  } else if (repState === 'down' && avgKnee > 155) {
+    repState = 'up';
+    const goodForm = avgKnee > 80 && avgKnee < 115;
+    countRep(true);
+    setFeedback('Stood up ✓', 'good');
+  } else if (repState === 'up') {
+    setFeedback('Bend knees to squat down', 'warning');
+  } else if (repState === 'down') {
+    if (avgKnee < 80) setFeedback('Too deep — ease up!', 'bad');
+    else setFeedback('Good depth! Now stand up', 'good');
+  }
+
+  repProgress = Math.min(Math.max((170 - avgKnee) / 60, 0), 1);
+}
+
+function detectFullBody(lms) {
+  const lShoulder = lm(lms, 11);
+  const rShoulder = lm(lms, 12);
+  const lWrist = lm(lms, 15);
+  const rWrist = lm(lms, 16);
+  const lElbow = lm(lms, 13);
+  const rElbow = lm(lms, 14);
+  const lHip = lm(lms, 23);
+  const rHip = lm(lms, 24);
+
+  if (!lShoulder||!rShoulder||!lWrist||!rWrist||!lElbow||!rElbow) return;
+
+  const lElbowAngle = angle3(lShoulder, lElbow, lWrist);
+  const rElbowAngle = angle3(rShoulder, rElbow, rWrist);
+
+  // Arms overhead: wrists above shoulders
+  const lOverhead = lShoulder.y - lWrist.y;
+  const rOverhead = rShoulder.y - rWrist.y;
+  const avgOverhead = (lOverhead + rOverhead) / 2;
+
+  updateAngle('ang-lelbow', lElbowAngle, 160, 180);
+  updateAngle('ang-relbow', rElbowAngle, 160, 180);
+
+  const avgElbow = (lElbowAngle + rElbowAngle) / 2;
+
+  if (repState === 'up' && avgOverhead > 0.12) {
+    repState = 'down';
+    setFeedback('Overhead! Reach higher!', 'good');
+  } else if (repState === 'down' && avgOverhead < 0.0) {
+    repState = 'up';
+    countRep(avgElbow > 155);
+    setFeedback('Full stretch complete ✓', 'good');
+  } else if (repState === 'up') {
+    setFeedback('Raise both arms overhead', 'warning');
+  } else {
+    if (avgElbow < 140) setFeedback('Straighten your arms!', 'bad');
+    else setFeedback('Great! Now lower arms', 'good');
+  }
+
+  repProgress = Math.min(Math.max(avgOverhead / 0.15, 0), 1);
+}
+
+// ── DRAWING ─────────────────────────────────────────────
+function drawSkeleton(lms, canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const connections = window.POSE_CONNECTIONS || [];
+  const green = '#00e5a0', red = '#ff4d6d';
+
+  // Draw connections
+  ctx.lineWidth = 3;
+  for (const [a, b] of connections) {
+    const pa = lms[a], pb = lms[b];
+    if (!pa || !pb || pa.visibility < 0.3 || pb.visibility < 0.3) continue;
+    ctx.beginPath();
+    ctx.strokeStyle = green + '99';
+    ctx.moveTo(pa.x * W, pa.y * H);
+    ctx.lineTo(pb.x * W, pb.y * H);
+    ctx.stroke();
+  }
+
+  // Draw landmarks
+  for (const lm of lms) {
+    if (!lm || lm.visibility < 0.3) continue;
+    ctx.beginPath();
+    ctx.arc(lm.x * W, lm.y * H, 5, 0, Math.PI * 2);
+    ctx.fillStyle = green;
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+}
+
+// ── MEDIAPIPE SETUP ─────────────────────────────────────
+let pose = null;
+let camera = null;
+
+async function startCamera() {
+  document.getElementById('startOverlay').classList.add('hidden');
+  document.getElementById('statusDot').classList.add('active');
+  document.getElementById('statusText').textContent = 'Loading model...';
+  document.getElementById('resetBtn').style.display = 'block';
+
+  const video = document.getElementById('videoEl');
+  const canvas = document.getElementById('canvasEl');
+
+  pose = new Pose({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
+  pose.setOptions({modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
+
+  pose.onResults(results => {
+    canvas.width = video.videoWidth || canvas.offsetWidth;
+    canvas.height = video.videoHeight || canvas.offsetHeight;
+
+    if (results.poseLandmarks) {
+      drawSkeleton(results.poseLandmarks, canvas);
+      EXERCISES[currentExercise].detect(results.poseLandmarks);
     } else {
-      this.textContent = 'Please fill all fields';
-      setTimeout(() => { this.textContent = 'Book Now →'; }, 2000);
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setFeedback('No pose detected — step back', 'warning');
     }
   });
+
+  camera = new Camera(video, {
+    onFrame: async () => { await pose.send({image: video}); },
+    width: 1280, height: 720
+  });
+
+  try {
+    await camera.start();
+    document.getElementById('statusText').textContent = 'Camera active';
+    sessionStart = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
+    addLog('Session started — ' + EXERCISES[currentExercise].name);
+  } catch(e) {
+    document.getElementById('statusText').textContent = 'Camera error';
+    document.getElementById('startOverlay').classList.remove('hidden');
+    addLog('Camera error: ' + e.message, true);
+  }
+}
+
+function updateTimer() {
+  if (!sessionStart) return;
+  const s = Math.floor((Date.now() - sessionStart) / 1000);
+  const m = Math.floor(s / 60);
+  document.getElementById('sessionTimer').textContent =
+    'SESSION: ' + String(m).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+}
+
+// ── INIT ────────────────────────────────────────────────
+updateGuide();
 </script>
 </body>
 </html>
